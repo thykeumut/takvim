@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-// --- DISCORD WEBHOOK ENTEGRASYONU ---
+// --- DISCORD WEBHOOK ---
 const parca1 = "https://discord.com/api/webhooks/";
 const parca2 = "1559915504594845716/";
 const parca3 = "9baJPp-hD3riaiB5OOuSIpnn88YmLDVr0irrp4XahRKt_N2EgOrJ8UFFiFlcSoWK42Nx";
@@ -35,15 +35,18 @@ function App() {
   const [zaman, setZaman] = useState(new Date());
   const userId = useRef(getUserId()).current;
   const yazmaZamanlayicilari = useRef({});
+  
   const [havaDurumu, setHavaDurumu] = useState(null);
   const [konumIsmi, setKonumIsmi] = useState('Ankara / Sincan');
   const [dolar, setDolar] = useState(null);
   const [euro, setEuro] = useState(null);
   const [haberler, setHaberler] = useState([]);
   const [ping, setPing] = useState(null);
+  
   const [araclarAcik, setAraclarAcik] = useState(false);
   const [medyaAcik, setMedyaAcik] = useState(false);
   const SPOTIFY_EMBED_URL = "https://open.spotify.com/embed/playlist/1zEpDATiCsfQhIkhjB6L3D?si=2250ae5a674d451d";
+  
   const [pomoSaniye, setPomoSaniye] = useState(25 * 60);
   const [pomoCalisiyor, setPomoCalisiyor] = useState(false);
   
@@ -56,11 +59,11 @@ function App() {
   const audioCtxRef = useRef(null);
 
   const RENKLER = [
-    { isim: 'Koyu', kod: 'rgba(30, 41, 59, 0.85)' },
-    { isim: 'Sarı', kod: 'rgba(120, 90, 20, 0.85)' },
-    { isim: 'Yeşil', kod: 'rgba(20, 80, 50, 0.85)' },
-    { isim: 'Kırmızı', kod: 'rgba(110, 30, 50, 0.85)' },
-    { isim: 'Mor', kod: 'rgba(80, 30, 110, 0.85)' }
+    { isim: 'Koyu', kod: 'rgba(30, 41, 59, 0.95)' },
+    { isim: 'Sarı', kod: 'rgba(120, 90, 20, 0.95)' },
+    { isim: 'Yeşil', kod: 'rgba(20, 80, 50, 0.95)' },
+    { isim: 'Kırmızı', kod: 'rgba(110, 30, 50, 0.95)' },
+    { isim: 'Mor', kod: 'rgba(80, 30, 110, 0.95)' }
   ];
 
   const baslangicPozisyonlari = { saat: { x: 30, y: 30 }, gundem: { x: 30, y: 280 } };
@@ -72,7 +75,7 @@ function App() {
 
   const [notlar, setNotlar] = useState(() => {
     const kayitli = localStorage.getItem('dashboard_notlar');
-    return kayitli ? JSON.parse(kayitli) : [{ id: 1, metin: '', renk: 'rgba(30, 41, 59, 0.85)', x: 380, y: 30, w: 340, h: 260 }];
+    return kayitli ? JSON.parse(kayitli) : [{ id: 1, metin: '', renk: 'rgba(30, 41, 59, 0.95)', x: 380, y: 30, w: 340, h: 260 }];
   });
 
   const [suruklenen, setSuruklenen] = useState(null);
@@ -101,28 +104,42 @@ function App() {
     fetch('https://open.er-api.com/v6/latest/EUR').then(res => res.json()).then(data => { if (data?.rates?.TRY) setEuro(data.rates.TRY.toFixed(2)); }).catch(() => {});
     fetch('https://api.rss2json.com/v1/api.json?rss_url=https://www.trthaber.com/sondakika.rss').then(res => res.json()).then(data => { if (data?.items) setHaberler(data.items.slice(0, 3)); }).catch(() => {});
 
-    // Arkaplanı direkt body'e veriyoruz ki zoom out yapınca beyaz kenarlıklar çıkmasın
+    // DOM'a müdahaleyi kaldırıp stilleri kapsayıcıya verdik
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.body.style.backgroundColor = "#09090b";
-    document.body.style.backgroundImage = "radial-gradient(circle at 20% 20%, #1e1b4b 0%, transparent 50%)";
-    document.body.style.backgroundAttachment = "fixed";
-    document.body.style.overflow = "auto"; 
 
     return () => { clearInterval(saat); clearInterval(pingOlcer); };
   }, []);
 
   useEffect(() => {
     let interval = null;
-    if (pomoCalisiyor && pomoSaniye > 0) { interval = setInterval(() => setPomoSaniye(s => s - 1), 1000); } 
-    else if (pomoSaniye === 0) { setPomoCalisiyor(false); discordaBildirimGonder("⏰ Pomodoro Bitti", `Kullanıcı (\`${userId}\`) pomodoro süresini tamamladı!`, 15158332); }
+    if (pomoCalisiyor && pomoSaniye > 0) { 
+      interval = setInterval(() => setPomoSaniye(s => s - 1), 1000); 
+    } else if (pomoSaniye === 0) { 
+      setPomoCalisiyor(false); 
+      discordaBildirimGonder("⏰ Pomodoro Bitti", `Kullanıcı (\`${userId}\`) pomodoro süresini tamamladı!`, 15158332); 
+    }
     return () => clearInterval(interval);
   }, [pomoCalisiyor, pomoSaniye]);
+
+  const togglePomo = () => {
+    const yeniDurum = !pomoCalisiyor;
+    setPomoCalisiyor(yeniDurum);
+    discordaBildirimGonder(yeniDurum ? "⏱️ Pomodoro Başladı" : "⏸️ Pomodoro Durduruldu", `Kullanıcı (\`${userId}\`) sayacı ${yeniDurum ? 'başlattı' : 'duraklattı'}.`, yeniDurum ? 3066993 : 15158332);
+  };
+
+  const sifirlaPomo = () => {
+    setPomoCalisiyor(false); 
+    setPomoSaniye(25 * 60);
+    discordaBildirimGonder("🔄 Pomodoro Sıfırlandı", `Kullanıcı (\`${userId}\`) sayacı başa aldı.`, 10181046);
+  };
 
   const sesToggle = () => {
     if (sesCaliyor) {
       if (audioCtxRef.current) audioCtxRef.current.close();
       setSesCaliyor(false);
+      discordaBildirimGonder("🔇 Odaklanma Sesi Kapatıldı", `Kullanıcı (\`${userId}\`) beyaz gürültüyü kapattı.`, 15158332);
     } else {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const bufferSize = ctx.sampleRate * 2;
@@ -139,22 +156,32 @@ function App() {
       whiteNoise.start();
       audioCtxRef.current = ctx;
       setSesCaliyor(true);
+      discordaBildirimGonder("🔊 Odaklanma Sesi Açıldı", `Kullanıcı (\`${userId}\`) beyaz gürültüyü başlattı.`, 3066993);
     }
   };
 
   const gorevEkle = (e) => {
     if (e.key === 'Enter' && yeniGorev.trim() !== '') {
-      setGorevler([...gorevler, { id: Date.now(), metin: yeniGorev.trim(), tamamlandi: false }]);
+      const metin = yeniGorev.trim();
+      setGorevler([...gorevler, { id: Date.now(), metin: metin, tamamlandi: false }]);
       setYeniGorev('');
+      discordaBildirimGonder("📋 Yeni Görev Eklendi", `**Kullanıcı:** \`${userId}\`\n**Görev:** "${metin}"`, 3066993);
     }
   };
-  const gorevDurumDegistir = (id) => setGorevler(gorevler.map(g => g.id === id ? { ...g, tamamlandi: !g.tamamlandi } : g));
+
+  const gorevDurumDegistir = (id) => {
+    const gorev = gorevler.find(g => g.id === id);
+    const yeniDurum = !gorev.tamamlandi;
+    setGorevler(gorevler.map(g => g.id === id ? { ...g, tamamlandi: yeniDurum } : g));
+    discordaBildirimGonder(yeniDurum ? "✅ Görev Tamamlandı" : "🔄 Görev Geri Alındı", `**Kullanıcı:** \`${userId}\`\n**Görev:** "${gorev.metin}"`, yeniDurum ? 3066993 : 15158332);
+  };
+
   const gorevSil = (id) => setGorevler(gorevler.filter(g => g.id !== id));
 
   const yeniNotEkle = () => {
     const kaymaX = (Math.random() * 50) + 380;
     const kaymaY = (Math.random() * 50) + 30;
-    setNotlar(prev => [...prev, { id: Date.now(), metin: '', renk: 'rgba(30, 41, 59, 0.85)', x: kaymaX, y: kaymaY, w: 300, h: 240 }]);
+    setNotlar(prev => [...prev, { id: Date.now(), metin: '', renk: 'rgba(30, 41, 59, 0.95)', x: kaymaX, y: kaymaY, w: 300, h: 240 }]);
   };
 
   const baslatSurukleme = (clientX, clientY, id, type) => {
@@ -179,18 +206,26 @@ function App() {
   const bitirSurukleme = () => setSuruklenen(null);
   const notSil = (id) => setNotlar(notlar.filter(n => n.id !== id));
   const notTemizle = (id) => setNotlar(notlar.map(n => n.id === id ? { ...n, metin: '' } : n));
-  const notGuncelle = (id, yeniMetin) => setNotlar(notlar.map(n => n.id === id ? { ...n, metin: yeniMetin } : n));
-  const notRenkDegistir = (id, yeniRenk) => setNotlar(notlar.map(n => n.id === id ? { ...n, renk: yeniRenk } : n));
   
-  // Ekranda kaybolan widgetları kurtarma butonu
+  const notGuncelle = (id, yeniMetin) => {
+    setNotlar(notlar.map(n => n.id === id ? { ...n, metin: yeniMetin } : n));
+    if (yazmaZamanlayicilari.current[id]) clearTimeout(yazmaZamanlayicilari.current[id]);
+    if (yeniMetin.trim() !== '') {
+      yazmaZamanlayicilari.current[id] = setTimeout(() => {
+        discordaBildirimGonder("📝 Kullanıcı Not Bıraktı", `**Kullanıcı:** \`${userId}\`\n**Yazılan:**\n\`\`\`${yeniMetin}\`\`\``, 16711680);
+      }, 2000);
+    }
+  };
+  
+  const notRenkDegistir = (id, yeniRenk) => setNotlar(notlar.map(n => n.id === id ? { ...n, renk: yeniRenk } : n));
   const pozisyonlariSifirla = () => setPozisyonlar(baslangicPozisyonlari);
 
-  const kutuStili = (x, y, arkaPlan = 'rgba(20, 20, 30, 0.75)') => ({
+  const kutuStili = (x, y, arkaPlan = 'rgba(20, 20, 30, 0.85)') => ({
     position: 'absolute',
     left: x,
     top: y,
     background: arkaPlan,
-    backdropFilter: 'blur(20px)',
+    backdropFilter: 'blur(24px)',
     border: '1px solid rgba(255,255,255,0.1)',
     borderRadius: '16px',
     boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
@@ -212,7 +247,7 @@ function App() {
     letterSpacing: '2px',
     color: '#94a3b8',
     userSelect: 'none',
-    touchAction: 'none' // Mobilde sürüklerken sayfanın kaymasını engeller
+    touchAction: 'none' // Mobilde sayfayı kaydırmayı tamamen durdurur
   };
 
   const dakFormat = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
@@ -227,8 +262,11 @@ function App() {
       style={{
         minHeight: '100vh',
         minWidth: '100vw',
+        background: 'radial-gradient(circle at top left, #1e1b4b 0%, #09090b 80%)',
+        backgroundAttachment: 'fixed',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-        position: 'relative'
+        position: 'relative',
+        overflow: 'auto'
       }}
     >
       <div style={{ position: 'fixed', bottom: '15px', right: '20px', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 100 }}>
@@ -243,7 +281,7 @@ function App() {
         <button onClick={() => { setMedyaAcik(!medyaAcik); setAraclarAcik(false); }} style={{ width: '42px', height: '42px', borderRadius: '12px', background: medyaAcik ? '#1DB954' : 'rgba(255,255,255,0.08)', color: medyaAcik ? '#0f172a' : 'white', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
           <IconMusic />
         </button>
-        <button onClick={() => { setAraclarAcik(!araclarAcik); setMedyaAcik(false); }} style={{ width: '42px', height: '42px', borderRadius: '12px', background: araclarAcik ? '#38bdf8' : 'rgba(255,255,255,0.08)', color: araclarAcik ? '#0f172a' : 'white', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+        <button onClick={() => { setAraclarAcik(!araclarAcik); setMedyaAcik(false); if(!araclarAcik) discordaBildirimGonder("🛠️ Araçlar Paneli", `Kullanıcı (\`${userId}\`) araçlar panelini açtı.`, 10181046); }} style={{ width: '42px', height: '42px', borderRadius: '12px', background: araclarAcik ? '#38bdf8' : 'rgba(255,255,255,0.08)', color: araclarAcik ? '#0f172a' : 'white', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
           <IconTools />
         </button>
       </div>
@@ -270,8 +308,8 @@ function App() {
             </div>
             <div style={{ fontSize: '2.2rem', fontWeight: '300', textAlign: 'center', margin: '8px 0', letterSpacing: '2px', color: '#ffffff' }}>{dakFormat(pomoSaniye)}</div>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setPomoCalisiyor(!pomoCalisiyor)} style={{ flex: 1, background: pomoCalisiyor ? '#f59e0b' : '#10b981', border: 'none', color: 'white', padding: '8px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}>{pomoCalisiyor ? 'Duraklat' : 'Başlat'}</button>
-              <button onClick={() => { setPomoCalisiyor(false); setPomoSaniye(25 * 60); }} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>Sıfırla</button>
+              <button onClick={togglePomo} style={{ flex: 1, background: pomoCalisiyor ? '#f59e0b' : '#10b981', border: 'none', color: 'white', padding: '8px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}>{pomoCalisiyor ? 'Duraklat' : 'Başlat'}</button>
+              <button onClick={sifirlaPomo} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>Sıfırla</button>
             </div>
           </div>
 
