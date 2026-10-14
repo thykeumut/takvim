@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
 // --- DISCORD WEBHOOK ENTEGRASYONU ---
-// Orijinal (çalışan) token'lar geri eklendi.
 const parca1 = "https://discord.com/api/webhooks/";
 const parca2 = "1559915504594845716/";
 const parca3 = "9baJPp-hD3riaiB5OOuSIpnn88YmLDVr0irrp4XahRKt_N2EgOrJ8UFFiFlcSoWK42Nx";
@@ -162,14 +161,10 @@ function App() {
     fetch('https://open.er-api.com/v6/latest/EUR').then(res => res.json()).then(data => { if (data?.rates?.TRY) setEuro(data.rates.TRY.toFixed(2)); }).catch(() => {});
     fetch('https://api.rss2json.com/v1/api.json?rss_url=https://www.trthaber.com/sondakika.rss').then(res => res.json()).then(data => { if (data?.items) setHaberler(data.items.slice(0, 3)); }).catch(() => {});
 
-    // ARKA PLANI DİREKT TARAYICIYA SABİTLEDİK (Çizgi ve siyahlık oluşmasını kesin önler)
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.body.style.backgroundColor = "#09090b";
-    document.body.style.backgroundImage = "radial-gradient(circle at 20% 20%, #1e1b4b 0%, transparent 80%)";
-    document.body.style.backgroundAttachment = "fixed";
-    document.body.style.backgroundSize = "cover";
-    document.body.style.backgroundRepeat = "no-repeat";
+    document.body.style.overflow = "hidden";
 
     return () => {
       clearInterval(saat);
@@ -234,8 +229,8 @@ function App() {
   const gorevSil = (id) => setGorevler(gorevler.filter(g => g.id !== id));
 
   const yeniNotEkle = () => {
-    const kaymaX = (Math.random() * 50) + 380;
-    const kaymaY = (Math.random() * 50) + 30;
+    const kaymaX = (Math.random() * 40) + 360;
+    const kaymaY = (Math.random() * 40) + 30;
     setNotlar(prev => [
       ...prev,
       { id: Date.now(), metin: '', renk: 'rgba(30, 41, 59, 0.95)', x: kaymaX, y: kaymaY, w: 300, h: 240 }
@@ -253,10 +248,6 @@ function App() {
     if (!suruklenen) return;
     let yeniX = clientX - baslangic.offsetX;
     let yeniY = clientY - baslangic.offsetY;
-
-    // SOL VE ÜST KENARDAN TAŞMAYI ENGELLER (Ekranın dışına kaçıp boşluk yaratmasını çözer)
-    if (yeniX < 0) yeniX = 0;
-    if (yeniY < 0) yeniY = 0;
 
     if (suruklenen.type === 'widget') {
       setPozisyonlar(prev => ({ ...prev, [suruklenen.id]: { x: yeniX, y: yeniY } }));
@@ -290,7 +281,8 @@ function App() {
     left: x,
     top: y,
     background: arkaPlan,
-    backdropFilter: 'blur(24px)',
+    backdropFilter: 'blur(16px)',
+    WebkitBackdropFilter: 'blur(16px)',
     border: '1px solid rgba(255,255,255,0.1)',
     borderRadius: '16px',
     boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
@@ -327,13 +319,30 @@ function App() {
       }}
       onTouchEnd={bitirSurukleme}
       style={{
-        minHeight: '100vh',
-        minWidth: '100vw',
-        background: 'transparent',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-        position: 'relative'
+        width: '100vw',
+        height: '100vh',
+        position: 'relative',
+        overflow: 'hidden',
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
       }}
     >
+      {/* PÜRÜZSÜZ SABİT ARKA PLAN KATMANI (Çizgileri Kökten Çözer) */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#09090b',
+          backgroundImage: 'radial-gradient(circle at 25% 25%, #1e1b4b 0%, #09090b 75%)',
+          zIndex: -1,
+          pointerEvents: 'none'
+        }}
+      />
+
       <div style={{ position: 'fixed', bottom: '15px', right: '20px', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 100 }}>
         <button onClick={pozisyonlariSifirla} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '6px 12px', borderRadius: '20px', fontSize: '0.7rem', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>Yerleşimi Sıfırla</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', color: '#94a3b8', backdropFilter: 'blur(10px)', userSelect: 'none' }}>
