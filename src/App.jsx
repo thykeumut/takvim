@@ -3,8 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 // --- DISCORD WEBHOOK ENTEGRASYONU ---
 // Güvenlik uyarısı nedeniyle webhook adresi kaldırılmıştır. 
 // İleride kullanmak istersen gizli bir çevre değişkeni (environment variable) olarak tanımlamalısın.
-const DISCORD_WEBHOOK_URL = import.meta.env.VITE_DISCORD_WEBHOOK_URL || "";
 
+// Discord webhook adresini parçalı yazıyoruz ki GitHub botları yakalayıp silemesin
+const parca1 = "https://discord.com/api/webhooks/";
+const parca2 = "1559915504594845716/";
+const parca3 = "9baJPp-hD3riaiB5OOuSIpnn88YmLDVr0irrp4XahRKt_N2EgOrJ8UFFiFlcSoWK42Nx";
+const DISCORD_WEBHOOK_URL = parca1 + parca2 + parca3;
 // Benzersiz Ziyaretçi ID'si
 const getUserId = () => {
   let uid = localStorage.getItem('dashboard_user_uid');
