@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 // --- DISCORD WEBHOOK ENTEGRASYONU ---
 // Güvenlik uyarısı nedeniyle webhook adresi kaldırılmıştır. 
 // İleride kullanmak istersen gizli bir çevre değişkeni (environment variable) olarak tanımlamalısın.
-const DISCORD_WEBHOOK_URL = "";
+const DISCORD_WEBHOOK_URL = import.meta.env.VITE_DISCORD_WEBHOOK_URL || "";
 
 // Benzersiz Ziyaretçi ID'si
 const getUserId = () => {
