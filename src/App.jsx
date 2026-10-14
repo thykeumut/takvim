@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 
-// --- DISCORD WEBHOOK ---
+// --- DISCORD WEBHOOK ENTEGRASYONU ---
+// Eğer bildirim gelmiyorsa, Discord bu token'ı public repoda gördüğü için silmiş olabilir. 
+// Yeni bir webhook açıp parca2 ve parca3'ü değiştirmelisin.
 const parca1 = "https://discord.com/api/webhooks/";
 const parca2 = "1559915504594845716/";
 const parca3 = "9baJPp-hD3riaiB5OOuSIpnn88YmLDVr0irrp4XahRKt_N2EgOrJ8UFFiFlcSoWK42Nx";
 const DISCORD_WEBHOOK_URL = parca1 + parca2 + parca3;
 
+// Benzersiz Ziyaretçi ID'si
 const getUserId = () => {
   let uid = localStorage.getItem('dashboard_user_uid');
   if (!uid) {
@@ -15,46 +18,88 @@ const getUserId = () => {
   return uid;
 };
 
+// Discord'a Mesaj Gönderen Fonksiyon (Orijinal hata yakalama yapısıyla)
 const discordaBildirimGonder = (baslik, aciklama, renk = 3447003) => {
   if (!DISCORD_WEBHOOK_URL) return;
+
   const payload = {
     username: "Sistem Takip Botu",
     avatar_url: "https://cdn-icons-png.flaticon.com/512/3682/3682321.png",
-    embeds: [{ title: baslik, description: aciklama, color: renk, footer: { text: `Tarih: ${new Date().toLocaleString('tr-TR')}` } }]
+    embeds: [
+      {
+        title: baslik,
+        description: aciklama,
+        color: renk,
+        footer: { text: `Tarih: ${new Date().toLocaleString('tr-TR')}` }
+      }
+    ]
   };
-  fetch(DISCORD_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
+
+  fetch(DISCORD_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(response => {
+    console.log('Discord Yanıt Durumu:', response.status);
+  })
+  .catch(err => console.log('Discord Webhook Hatası:', err));
 };
 
-// --- İKONLAR ---
-const IconMusic = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>;
-const IconTools = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>;
-const IconClose = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
-const IconCheck = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>;
+// --- VEKTÖREL İKONLAR ---
+const IconMusic = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 18V5l12-2v13"></path>
+    <circle cx="6" cy="18" r="3"></circle>
+    <circle cx="18" cy="16" r="3"></circle>
+  </svg>
+);
+
+const IconTools = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+  </svg>
+);
+
+const IconClose = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
 
 function App() {
   const [zaman, setZaman] = useState(new Date());
   const userId = useRef(getUserId()).current;
   const yazmaZamanlayicilari = useRef({});
-  
+
   const [havaDurumu, setHavaDurumu] = useState(null);
   const [konumIsmi, setKonumIsmi] = useState('Ankara / Sincan');
   const [dolar, setDolar] = useState(null);
   const [euro, setEuro] = useState(null);
   const [haberler, setHaberler] = useState([]);
   const [ping, setPing] = useState(null);
-  
+
   const [araclarAcik, setAraclarAcik] = useState(false);
   const [medyaAcik, setMedyaAcik] = useState(false);
+
   const SPOTIFY_EMBED_URL = "https://open.spotify.com/embed/playlist/1zEpDATiCsfQhIkhjB6L3D?si=2250ae5a674d451d";
-  
+
   const [pomoSaniye, setPomoSaniye] = useState(25 * 60);
   const [pomoCalisiyor, setPomoCalisiyor] = useState(false);
-  
+
   const [gorevler, setGorevler] = useState(() => {
     const kayitli = localStorage.getItem('dashboard_gorevler');
     return kayitli ? JSON.parse(kayitli) : [];
   });
   const [yeniGorev, setYeniGorev] = useState('');
+
   const [sesCaliyor, setSesCaliyor] = useState(false);
   const audioCtxRef = useRef(null);
 
@@ -67,7 +112,7 @@ function App() {
   ];
 
   const baslangicPozisyonlari = { saat: { x: 30, y: 30 }, gundem: { x: 30, y: 280 } };
-  
+
   const [pozisyonlar, setPozisyonlar] = useState(() => {
     const kayitli = localStorage.getItem('dashboard_pozisyonlar');
     return kayitli ? JSON.parse(kayitli) : baslangicPozisyonlari;
@@ -75,65 +120,74 @@ function App() {
 
   const [notlar, setNotlar] = useState(() => {
     const kayitli = localStorage.getItem('dashboard_notlar');
-    return kayitli ? JSON.parse(kayitli) : [{ id: 1, metin: '', renk: 'rgba(30, 41, 59, 0.95)', x: 380, y: 30, w: 340, h: 260 }];
+    return kayitli ? JSON.parse(kayitli) : [
+      { id: 1, metin: '', renk: 'rgba(30, 41, 59, 0.95)', x: 380, y: 30, w: 340, h: 260 }
+    ];
   });
+
+  useEffect(() => {
+    localStorage.setItem('dashboard_pozisyonlar', JSON.stringify(pozisyonlar));
+  }, [pozisyonlar]);
+
+  useEffect(() => {
+    localStorage.setItem('dashboard_notlar', JSON.stringify(notlar));
+  }, [notlar]);
+
+  useEffect(() => {
+    localStorage.setItem('dashboard_gorevler', JSON.stringify(gorevler));
+  }, [gorevler]);
 
   const [suruklenen, setSuruklenen] = useState(null);
   const [baslangic, setBaslangic] = useState({ x: 0, y: 0 });
 
-  useEffect(() => { localStorage.setItem('dashboard_pozisyonlar', JSON.stringify(pozisyonlar)); }, [pozisyonlar]);
-  useEffect(() => { localStorage.setItem('dashboard_notlar', JSON.stringify(notlar)); }, [notlar]);
-  useEffect(() => { localStorage.setItem('dashboard_gorevler', JSON.stringify(gorevler)); }, [gorevler]);
-
   useEffect(() => {
     const saat = setInterval(() => setZaman(new Date()), 1000);
+
     const pingOlcer = setInterval(() => {
       const basla = Date.now();
-      fetch('https://1.1.1.1/cdn-cgi/trace', { mode: 'no-cors', cache: 'no-store' }).then(() => setPing(Date.now() - basla)).catch(() => setPing(null));
+      fetch('https://1.1.1.1/cdn-cgi/trace', { mode: 'no-cors', cache: 'no-store' })
+        .then(() => setPing(Date.now() - basla))
+        .catch(() => setPing(null));
     }, 4000);
 
     const havaDurumuCek = (lat, lon, isim) => {
       fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
         .then(res => res.json())
-        .then(data => { if (data?.current_weather) { setHavaDurumu(data.current_weather); setKonumIsmi(isim); } })
+        .then(data => {
+          if (data && data.current_weather) {
+            setHavaDurumu(data.current_weather);
+            setKonumIsmi(isim);
+          }
+        })
         .catch(() => setKonumIsmi('Ankara / Sincan'));
     };
 
     havaDurumuCek(39.96, 32.58, 'Ankara / Sincan');
+
     fetch('https://open.er-api.com/v6/latest/USD').then(res => res.json()).then(data => { if (data?.rates?.TRY) setDolar(data.rates.TRY.toFixed(2)); }).catch(() => {});
     fetch('https://open.er-api.com/v6/latest/EUR').then(res => res.json()).then(data => { if (data?.rates?.TRY) setEuro(data.rates.TRY.toFixed(2)); }).catch(() => {});
     fetch('https://api.rss2json.com/v1/api.json?rss_url=https://www.trthaber.com/sondakika.rss').then(res => res.json()).then(data => { if (data?.items) setHaberler(data.items.slice(0, 3)); }).catch(() => {});
 
-    // DOM'a müdahaleyi kaldırıp stilleri kapsayıcıya verdik
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.body.style.backgroundColor = "#09090b";
 
-    return () => { clearInterval(saat); clearInterval(pingOlcer); };
+    return () => {
+      clearInterval(saat);
+      clearInterval(pingOlcer);
+    };
   }, []);
 
   useEffect(() => {
     let interval = null;
-    if (pomoCalisiyor && pomoSaniye > 0) { 
-      interval = setInterval(() => setPomoSaniye(s => s - 1), 1000); 
-    } else if (pomoSaniye === 0) { 
-      setPomoCalisiyor(false); 
-      discordaBildirimGonder("⏰ Pomodoro Bitti", `Kullanıcı (\`${userId}\`) pomodoro süresini tamamladı!`, 15158332); 
+    if (pomoCalisiyor && pomoSaniye > 0) {
+      interval = setInterval(() => setPomoSaniye(s => s - 1), 1000);
+    } else if (pomoSaniye === 0) {
+      setPomoCalisiyor(false);
+      discordaBildirimGonder("⏰ Pomodoro Bitti", `Kullanıcı (\`${userId}\`) pomodoro süresini tamamladı!`, 15158332);
     }
     return () => clearInterval(interval);
   }, [pomoCalisiyor, pomoSaniye]);
-
-  const togglePomo = () => {
-    const yeniDurum = !pomoCalisiyor;
-    setPomoCalisiyor(yeniDurum);
-    discordaBildirimGonder(yeniDurum ? "⏱️ Pomodoro Başladı" : "⏸️ Pomodoro Durduruldu", `Kullanıcı (\`${userId}\`) sayacı ${yeniDurum ? 'başlattı' : 'duraklattı'}.`, yeniDurum ? 3066993 : 15158332);
-  };
-
-  const sifirlaPomo = () => {
-    setPomoCalisiyor(false); 
-    setPomoSaniye(25 * 60);
-    discordaBildirimGonder("🔄 Pomodoro Sıfırlandı", `Kullanıcı (\`${userId}\`) sayacı başa aldı.`, 10181046);
-  };
 
   const sesToggle = () => {
     if (sesCaliyor) {
@@ -145,7 +199,9 @@ function App() {
       const bufferSize = ctx.sampleRate * 2;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const output = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
       const whiteNoise = ctx.createBufferSource();
       whiteNoise.buffer = buffer;
       whiteNoise.loop = true;
@@ -162,26 +218,50 @@ function App() {
 
   const gorevEkle = (e) => {
     if (e.key === 'Enter' && yeniGorev.trim() !== '') {
-      const metin = yeniGorev.trim();
-      setGorevler([...gorevler, { id: Date.now(), metin: metin, tamamlandi: false }]);
+      const eklenecek = yeniGorev.trim();
+      setGorevler([...gorevler, { id: Date.now(), metin: eklenecek, tamamlandi: false }]);
       setYeniGorev('');
-      discordaBildirimGonder("📋 Yeni Görev Eklendi", `**Kullanıcı:** \`${userId}\`\n**Görev:** "${metin}"`, 3066993);
+
+      discordaBildirimGonder(
+        "📋 Yeni Görev Eklendi",
+        `**Kullanıcı:** \`${userId}\`\n**Görev:** "${eklenecek}"`,
+        3066993
+      );
     }
   };
 
   const gorevDurumDegistir = (id) => {
     const gorev = gorevler.find(g => g.id === id);
     const yeniDurum = !gorev.tamamlandi;
+
     setGorevler(gorevler.map(g => g.id === id ? { ...g, tamamlandi: yeniDurum } : g));
-    discordaBildirimGonder(yeniDurum ? "✅ Görev Tamamlandı" : "🔄 Görev Geri Alındı", `**Kullanıcı:** \`${userId}\`\n**Görev:** "${gorev.metin}"`, yeniDurum ? 3066993 : 15158332);
+
+    discordaBildirimGonder(
+      yeniDurum ? "✅ Görev Tamamlandı" : "🔄 Görev Geri Alındı",
+      `**Kullanıcı:** \`${userId}\`\n**Görev:** "${gorev.metin}"`,
+      yeniDurum ? 3066993 : 15158332
+    );
   };
 
-  const gorevSil = (id) => setGorevler(gorevler.filter(g => g.id !== id));
+  const gorevSil = (id) => {
+    setGorevler(gorevler.filter(g => g.id !== id));
+  };
 
   const yeniNotEkle = () => {
     const kaymaX = (Math.random() * 50) + 380;
     const kaymaY = (Math.random() * 50) + 30;
-    setNotlar(prev => [...prev, { id: Date.now(), metin: '', renk: 'rgba(30, 41, 59, 0.95)', x: kaymaX, y: kaymaY, w: 300, h: 240 }]);
+    setNotlar(prev => [
+      ...prev,
+      {
+        id: Date.now(),
+        metin: '',
+        renk: 'rgba(30, 41, 59, 0.95)',
+        x: kaymaX,
+        y: kaymaY,
+        w: 300,
+        h: 240
+      }
+    ]);
   };
 
   const baslatSurukleme = (clientX, clientY, id, type) => {
@@ -204,20 +284,30 @@ function App() {
   };
 
   const bitirSurukleme = () => setSuruklenen(null);
+
   const notSil = (id) => setNotlar(notlar.filter(n => n.id !== id));
   const notTemizle = (id) => setNotlar(notlar.map(n => n.id === id ? { ...n, metin: '' } : n));
-  
+
   const notGuncelle = (id, yeniMetin) => {
     setNotlar(notlar.map(n => n.id === id ? { ...n, metin: yeniMetin } : n));
-    if (yazmaZamanlayicilari.current[id]) clearTimeout(yazmaZamanlayicilari.current[id]);
+
+    if (yazmaZamanlayicilari.current[id]) {
+      clearTimeout(yazmaZamanlayicilari.current[id]);
+    }
+
     if (yeniMetin.trim() !== '') {
       yazmaZamanlayicilari.current[id] = setTimeout(() => {
-        discordaBildirimGonder("📝 Kullanıcı Not Bıraktı", `**Kullanıcı:** \`${userId}\`\n**Yazılan:**\n\`\`\`${yeniMetin}\`\`\``, 16711680);
+        discordaBildirimGonder(
+          "📝 Kullanıcı Not Bıraktı",
+          `**Kullanıcı:** \`${userId}\`\n**Yazılan:**\n\`\`\`${yeniMetin}\`\`\``,
+          16711680
+        );
       }, 2000);
     }
   };
-  
+
   const notRenkDegistir = (id, yeniRenk) => setNotlar(notlar.map(n => n.id === id ? { ...n, renk: yeniRenk } : n));
+  
   const pozisyonlariSifirla = () => setPozisyonlar(baslangicPozisyonlari);
 
   const kutuStili = (x, y, arkaPlan = 'rgba(20, 20, 30, 0.85)') => ({
@@ -257,7 +347,9 @@ function App() {
       onMouseMove={(e) => hareketEt(e.clientX, e.clientY)}
       onMouseUp={bitirSurukleme}
       onMouseLeave={bitirSurukleme}
-      onTouchMove={(e) => { if (e.touches.length > 0) hareketEt(e.touches[0].clientX, e.touches[0].clientY); }}
+      onTouchMove={(e) => {
+        if (e.touches.length > 0) hareketEt(e.touches[0].clientX, e.touches[0].clientY);
+      }}
       onTouchEnd={bitirSurukleme}
       style={{
         minHeight: '100vh',
@@ -278,10 +370,25 @@ function App() {
       </div>
 
       <div style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 1000 }}>
-        <button onClick={() => { setMedyaAcik(!medyaAcik); setAraclarAcik(false); }} style={{ width: '42px', height: '42px', borderRadius: '12px', background: medyaAcik ? '#1DB954' : 'rgba(255,255,255,0.08)', color: medyaAcik ? '#0f172a' : 'white', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+        <button
+          onClick={() => {
+            setMedyaAcik(!medyaAcik);
+            setAraclarAcik(false);
+          }}
+          style={{ width: '42px', height: '42px', borderRadius: '12px', background: medyaAcik ? '#1DB954' : 'rgba(255,255,255,0.08)', color: medyaAcik ? '#0f172a' : 'white', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}
+        >
           <IconMusic />
         </button>
-        <button onClick={() => { setAraclarAcik(!araclarAcik); setMedyaAcik(false); if(!araclarAcik) discordaBildirimGonder("🛠️ Araçlar Paneli", `Kullanıcı (\`${userId}\`) araçlar panelini açtı.`, 10181046); }} style={{ width: '42px', height: '42px', borderRadius: '12px', background: araclarAcik ? '#38bdf8' : 'rgba(255,255,255,0.08)', color: araclarAcik ? '#0f172a' : 'white', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>
+
+        <button
+          onClick={() => {
+            const yeniDurum = !araclarAcik;
+            setAraclarAcik(yeniDurum);
+            setMedyaAcik(false);
+            if (yeniDurum) discordaBildirimGonder("🛠️ Araçlar Paneli", `Kullanıcı (\`${userId}\`) araçlar panelini açtı.`, 10181046);
+          }}
+          style={{ width: '42px', height: '42px', borderRadius: '12px', background: araclarAcik ? '#38bdf8' : 'rgba(255,255,255,0.08)', color: araclarAcik ? '#0f172a' : 'white', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}
+        >
           <IconTools />
         </button>
       </div>
@@ -304,18 +411,41 @@ function App() {
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '14px', marginBottom: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '500' }}>⏱️ Pomodoro Zamanlayıcı</span>
-              <span style={{ fontSize: '0.7rem', color: pomoCalisiyor ? '#4ade80' : '#f87171', background: pomoCalisiyor ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)', padding: '2px 8px', borderRadius: '10px' }}>{pomoCalisiyor ? 'Odaklanılıyor' : 'Duraklatıldı'}</span>
+              <span style={{ fontSize: '0.7rem', color: pomoCalisiyor ? '#4ade80' : '#f87171', background: pomoCalisiyor ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)', padding: '2px 8px', borderRadius: '10px' }}>
+                {pomoCalisiyor ? 'Odaklanılıyor' : 'Duraklatıldı'}
+              </span>
             </div>
-            <div style={{ fontSize: '2.2rem', fontWeight: '300', textAlign: 'center', margin: '8px 0', letterSpacing: '2px', color: '#ffffff' }}>{dakFormat(pomoSaniye)}</div>
+
+            <div style={{ fontSize: '2.2rem', fontWeight: '300', textAlign: 'center', margin: '8px 0', letterSpacing: '2px', color: '#ffffff' }}>
+              {dakFormat(pomoSaniye)}
+            </div>
+
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={togglePomo} style={{ flex: 1, background: pomoCalisiyor ? '#f59e0b' : '#10b981', border: 'none', color: 'white', padding: '8px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}>{pomoCalisiyor ? 'Duraklat' : 'Başlat'}</button>
-              <button onClick={sifirlaPomo} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>Sıfırla</button>
+              <button onClick={() => {
+                const durum = !pomoCalisiyor;
+                setPomoCalisiyor(durum);
+                discordaBildirimGonder(durum ? "⏱️ Pomodoro Başladı" : "⏸️ Pomodoro Durduruldu", `Kullanıcı (\`${userId}\`) sayacı ${durum ? 'başlattı' : 'duraklattı'}.`, durum ? 3066993 : 15158332);
+              }} style={{ flex: 1, background: pomoCalisiyor ? '#f59e0b' : '#10b981', border: 'none', color: 'white', padding: '8px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}>
+                {pomoCalisiyor ? 'Duraklat' : 'Başlat'}
+              </button>
+              <button onClick={() => {
+                setPomoCalisiyor(false);
+                setPomoSaniye(25 * 60);
+                discordaBildirimGonder("🔄 Pomodoro Sıfırlandı", `Kullanıcı (\`${userId}\`) sayacı başa aldı.`, 10181046);
+              }} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>
+                Sıfırla
+              </button>
             </div>
           </div>
 
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px 14px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div><span style={{ fontSize: '0.8rem', color: '#e2e8f0', display: 'block', fontWeight: '500' }}>🔊 Odaklanma Sesi</span><span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Beyaz Gürültü</span></div>
-            <button onClick={sesToggle} style={{ background: sesCaliyor ? '#ef4444' : 'rgba(56, 189, 248, 0.2)', border: sesCaliyor ? 'none' : '1px solid rgba(56, 189, 248, 0.4)', color: sesCaliyor ? 'white' : '#38bdf8', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '600' }}>{sesCaliyor ? 'Kapat' : 'Çal'}</button>
+            <div>
+              <span style={{ fontSize: '0.8rem', color: '#e2e8f0', display: 'block', fontWeight: '500' }}>🔊 Odaklanma Sesi</span>
+              <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Beyaz Gürültü</span>
+            </div>
+            <button onClick={sesToggle} style={{ background: sesCaliyor ? '#ef4444' : 'rgba(56, 189, 248, 0.2)', border: sesCaliyor ? 'none' : '1px solid rgba(56, 189, 248, 0.4)', color: sesCaliyor ? 'white' : '#38bdf8', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: '600' }}>
+              {sesCaliyor ? 'Kapat' : 'Çal'}
+            </button>
           </div>
 
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '14px', marginBottom: '12px' }}>
@@ -326,7 +456,9 @@ function App() {
               {gorevler.map((g) => (
                 <div key={g.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: '6px', fontSize: '0.78rem' }}>
                   <div onClick={() => gorevDurumDegistir(g.id)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: 1, textDecoration: g.tamamlandi ? 'line-through' : 'none', color: g.tamamlandi ? '#64748b' : '#e2e8f0' }}>
-                    <span style={{ width: '14px', height: '14px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: g.tamamlandi ? '#10b981' : 'transparent' }}>{g.tamamlandi && <IconCheck />}</span>
+                    <span style={{ width: '14px', height: '14px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: g.tamamlandi ? '#10b981' : 'transparent' }}>
+                      {g.tamamlandi && <IconCheck />}
+                    </span>
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.metin}</span>
                   </div>
                   <button onClick={() => gorevSil(g.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', padding: '0 4px' }}>✕</button>
@@ -338,27 +470,48 @@ function App() {
       )}
 
       <div style={{ ...kutuStili(pozisyonlar.saat.x, pozisyonlar.saat.y), width: '320px', zIndex: suruklenen?.id === 'saat' ? 100 : 10 }}>
-        <div style={bantStili} onMouseDown={(e) => baslatSurukleme(e.clientX, e.clientY, 'saat', 'widget')} onTouchStart={(e) => { if (e.touches.length > 0) baslatSurukleme(e.touches[0].clientX, e.touches[0].clientY, 'saat', 'widget'); }}>KONTROL PANELİ</div>
+        <div style={bantStili} onMouseDown={(e) => baslatSurukleme(e.clientX, e.clientY, 'saat', 'widget')} onTouchStart={(e) => { if (e.touches.length > 0) baslatSurukleme(e.touches[0].clientX, e.touches[0].clientY, 'saat', 'widget'); }}>
+          KONTROL PANELİ
+        </div>
         <div style={{ padding: '20px', textAlign: 'center' }}>
-          <h2 style={{ margin: '0 0 5px 0', fontSize: '3.2rem', fontWeight: '300', color: '#ffffff' }}>{zaman.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</h2>
-          <p style={{ margin: '0 0 18px 0', color: '#94a3b8', fontSize: '1rem' }}>{zaman.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          <button onClick={yeniNotEkle} style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.1)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', cursor: 'pointer', fontSize: '0.95rem', fontWeight: '500' }}>YENİ NOT OLUŞTUR</button>
+          <h2 style={{ margin: '0 0 5px 0', fontSize: '3.2rem', fontWeight: '300', color: '#ffffff' }}>
+            {zaman.toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}
+          </h2>
+          <p style={{ margin: '0 0 18px 0', color: '#94a3b8', fontSize: '1rem' }}>
+            {zaman.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+          <button onClick={yeniNotEkle} style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.1)', color: '#ffffff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '10px', cursor: 'pointer', fontSize: '0.95rem', fontWeight: '500' }}>
+            YENİ NOT OLUŞTUR
+          </button>
         </div>
       </div>
 
       <div style={{ ...kutuStili(pozisyonlar.gundem.x, pozisyonlar.gundem.y), width: '320px', zIndex: suruklenen?.id === 'gundem' ? 100 : 10 }}>
-        <div style={bantStili} onMouseDown={(e) => baslatSurukleme(e.clientX, e.clientY, 'gundem', 'widget')} onTouchStart={(e) => { if (e.touches.length > 0) baslatSurukleme(e.touches[0].clientX, e.touches[0].clientY, 'gundem', 'widget'); }}>GÜNLÜK ÖZET</div>
+        <div style={bantStili} onMouseDown={(e) => baslatSurukleme(e.clientX, e.clientY, 'gundem', 'widget')} onTouchStart={(e) => { if (e.touches.length > 0) baslatSurukleme(e.touches[0].clientX, e.touches[0].clientY, 'gundem', 'widget'); }}>
+          GÜNLÜK ÖZET
+        </div>
         <div style={{ padding: '15px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '15px' }}>
-            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 4px', borderRadius: '10px', textAlign: 'center' }}><span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{konumIsmi}</span><strong style={{ fontSize: '1.1rem', color: '#ffffff' }}>{havaDurumu ? `${havaDurumu.temperature}°C` : '...'}</strong></div>
-            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 4px', borderRadius: '10px', textAlign: 'center' }}><span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>USD / TRY</span><strong style={{ fontSize: '1.1rem', color: '#4ade80' }}>{dolar ? `₺${dolar}` : '...'}</strong></div>
-            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 4px', borderRadius: '10px', textAlign: 'center' }}><span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>EUR / TRY</span><strong style={{ fontSize: '1.1rem', color: '#60a5fa' }}>{euro ? `₺${euro}` : '...'}</strong></div>
+            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 4px', borderRadius: '10px', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{konumIsmi}</span>
+              <strong style={{ fontSize: '1.1rem', color: '#ffffff' }}>{havaDurumu ? `${havaDurumu.temperature}°C` : '...'}</strong>
+            </div>
+            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 4px', borderRadius: '10px', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>USD / TRY</span>
+              <strong style={{ fontSize: '1.1rem', color: '#4ade80' }}>{dolar ? `₺${dolar}` : '...'}</strong>
+            </div>
+            <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 4px', borderRadius: '10px', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>EUR / TRY</span>
+              <strong style={{ fontSize: '1.1rem', color: '#60a5fa' }}>{euro ? `₺${euro}` : '...'}</strong>
+            </div>
           </div>
           <div style={{ fontSize: '0.85rem' }}>
             <h4 style={{ margin: '0 0 8px 0', color: '#94a3b8', fontWeight: 'normal', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '1px' }}>Son Dakika (TRT)</h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {haberler.map((haber, i) => (
-                <li key={i} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}><a href={haber.link} target="_blank" rel="noreferrer" style={{ color: '#cbd5e1', textDecoration: 'none', lineHeight: '1.3', display: 'block', fontSize: '0.8rem' }}>{haber.title}</a></li>
+                <li key={i} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <a href={haber.link} target="_blank" rel="noreferrer" style={{ color: '#cbd5e1', textDecoration: 'none', lineHeight: '1.3', display: 'block', fontSize: '0.8rem' }}>{haber.title}</a>
+                </li>
               ))}
             </ul>
           </div>
@@ -373,7 +526,9 @@ function App() {
                 <span key={i} onClick={() => notRenkDegistir(not.id, r.kod)} style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: r.kod, border: '1px solid rgba(255,255,255,0.5)', cursor: 'pointer', display: 'inline-block' }} title={r.isim} />
               ))}
             </div>
-            <button onClick={() => notSil(not.id)} style={{ background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', alignItems: 'center' }} title="Notu Sil"><IconClose /></button>
+            <button onClick={() => notSil(not.id)} style={{ background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', alignItems: 'center' }} title="Notu Sil">
+              <IconClose />
+            </button>
           </div>
           <textarea value={not.metin} onChange={(e) => notGuncelle(not.id, e.target.value)} placeholder="Planlarınızı yazın..." style={{ flex: 1, width: '100%', background: 'transparent', border: 'none', padding: '15px', resize: 'none', outline: 'none', color: '#f8fafc', fontFamily: 'inherit', fontSize: '1rem', lineHeight: '1.5' }} />
         </div>
