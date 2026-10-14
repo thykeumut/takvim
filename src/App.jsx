@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 
 // --- DISCORD WEBHOOK ENTEGRASYONU ---
-// Eğer bildirim gelmiyorsa, Discord bu token'ı public repoda gördüğü için silmiş olabilir. 
-// Yeni bir webhook açıp parca2 ve parca3'ü değiştirmelisin.
+// DİKKAT: Eski token Discord tarafından silindi. Yeni bir webhook oluşturup aşağıdaki 2 parçayı güncellemelisin!
 const parca1 = "https://discord.com/api/webhooks/";
-const parca2 = "1559915504594845716/";
-const parca3 = "9baJPp-hD3riaiB5OOuSIpnn88YmLDVr0irrp4XahRKt_N2EgOrJ8UFFiFlcSoWK42Nx";
+const parca2 = "BURAYA_YENI_WEBHOOK_ID_GELECEK"; 
+const parca3 = "BURAYA_YENI_WEBHOOK_TOKEN_GELECEK";
 const DISCORD_WEBHOOK_URL = parca1 + parca2 + parca3;
 
 // Benzersiz Ziyaretçi ID'si
@@ -18,9 +17,9 @@ const getUserId = () => {
   return uid;
 };
 
-// Discord'a Mesaj Gönderen Fonksiyon (Orijinal hata yakalama yapısıyla)
+// Discord'a Mesaj Gönderen Fonksiyon
 const discordaBildirimGonder = (baslik, aciklama, renk = 3447003) => {
-  if (!DISCORD_WEBHOOK_URL) return;
+  if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.includes("BURAYA")) return;
 
   const payload = {
     username: "Sistem Takip Botu",
@@ -39,9 +38,6 @@ const discordaBildirimGonder = (baslik, aciklama, renk = 3447003) => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
-  })
-  .then(response => {
-    console.log('Discord Yanıt Durumu:', response.status);
   })
   .catch(err => console.log('Discord Webhook Hatası:', err));
 };
@@ -168,9 +164,12 @@ function App() {
     fetch('https://open.er-api.com/v6/latest/EUR').then(res => res.json()).then(data => { if (data?.rates?.TRY) setEuro(data.rates.TRY.toFixed(2)); }).catch(() => {});
     fetch('https://api.rss2json.com/v1/api.json?rss_url=https://www.trthaber.com/sondakika.rss').then(res => res.json()).then(data => { if (data?.items) setHaberler(data.items.slice(0, 3)); }).catch(() => {});
 
+    // ARKA PLANI DİREKT BODY'YE SABİTLEDİK (Siyah boşluk olmaması için)
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.body.style.backgroundColor = "#09090b";
+    document.body.style.backgroundImage = "radial-gradient(circle at top left, #1e1b4b 0%, #09090b 80%)";
+    document.body.style.backgroundAttachment = "fixed";
 
     return () => {
       clearInterval(saat);
@@ -221,46 +220,25 @@ function App() {
       const eklenecek = yeniGorev.trim();
       setGorevler([...gorevler, { id: Date.now(), metin: eklenecek, tamamlandi: false }]);
       setYeniGorev('');
-
-      discordaBildirimGonder(
-        "📋 Yeni Görev Eklendi",
-        `**Kullanıcı:** \`${userId}\`\n**Görev:** "${eklenecek}"`,
-        3066993
-      );
+      discordaBildirimGonder("📋 Yeni Görev Eklendi", `**Kullanıcı:** \`${userId}\`\n**Görev:** "${eklenecek}"`, 3066993);
     }
   };
 
   const gorevDurumDegistir = (id) => {
     const gorev = gorevler.find(g => g.id === id);
     const yeniDurum = !gorev.tamamlandi;
-
     setGorevler(gorevler.map(g => g.id === id ? { ...g, tamamlandi: yeniDurum } : g));
-
-    discordaBildirimGonder(
-      yeniDurum ? "✅ Görev Tamamlandı" : "🔄 Görev Geri Alındı",
-      `**Kullanıcı:** \`${userId}\`\n**Görev:** "${gorev.metin}"`,
-      yeniDurum ? 3066993 : 15158332
-    );
+    discordaBildirimGonder(yeniDurum ? "✅ Görev Tamamlandı" : "🔄 Görev Geri Alındı", `**Kullanıcı:** \`${userId}\`\n**Görev:** "${gorev.metin}"`, yeniDurum ? 3066993 : 15158332);
   };
 
-  const gorevSil = (id) => {
-    setGorevler(gorevler.filter(g => g.id !== id));
-  };
+  const gorevSil = (id) => setGorevler(gorevler.filter(g => g.id !== id));
 
   const yeniNotEkle = () => {
     const kaymaX = (Math.random() * 50) + 380;
     const kaymaY = (Math.random() * 50) + 30;
     setNotlar(prev => [
       ...prev,
-      {
-        id: Date.now(),
-        metin: '',
-        renk: 'rgba(30, 41, 59, 0.95)',
-        x: kaymaX,
-        y: kaymaY,
-        w: 300,
-        h: 240
-      }
+      { id: Date.now(), metin: '', renk: 'rgba(30, 41, 59, 0.95)', x: kaymaX, y: kaymaY, w: 300, h: 240 }
     ]);
   };
 
@@ -273,8 +251,12 @@ function App() {
 
   const hareketEt = (clientX, clientY) => {
     if (!suruklenen) return;
-    const yeniX = clientX - baslangic.offsetX;
-    const yeniY = clientY - baslangic.offsetY;
+    let yeniX = clientX - baslangic.offsetX;
+    let yeniY = clientY - baslangic.offsetY;
+
+    // EKRAN DIŞINA TAŞMA KORUMASI (Siyah Boşluk Bug'ı Çözümü)
+    if (yeniX < 0) yeniX = 0;
+    if (yeniY < 0) yeniY = 0;
 
     if (suruklenen.type === 'widget') {
       setPozisyonlar(prev => ({ ...prev, [suruklenen.id]: { x: yeniX, y: yeniY } }));
@@ -290,18 +272,11 @@ function App() {
 
   const notGuncelle = (id, yeniMetin) => {
     setNotlar(notlar.map(n => n.id === id ? { ...n, metin: yeniMetin } : n));
-
-    if (yazmaZamanlayicilari.current[id]) {
-      clearTimeout(yazmaZamanlayicilari.current[id]);
-    }
+    if (yazmaZamanlayicilari.current[id]) clearTimeout(yazmaZamanlayicilari.current[id]);
 
     if (yeniMetin.trim() !== '') {
       yazmaZamanlayicilari.current[id] = setTimeout(() => {
-        discordaBildirimGonder(
-          "📝 Kullanıcı Not Bıraktı",
-          `**Kullanıcı:** \`${userId}\`\n**Yazılan:**\n\`\`\`${yeniMetin}\`\`\``,
-          16711680
-        );
+        discordaBildirimGonder("📝 Kullanıcı Not Bıraktı", `**Kullanıcı:** \`${userId}\`\n**Yazılan:**\n\`\`\`${yeniMetin}\`\`\``, 16711680);
       }, 2000);
     }
   };
@@ -337,7 +312,7 @@ function App() {
     letterSpacing: '2px',
     color: '#94a3b8',
     userSelect: 'none',
-    touchAction: 'none' // Mobilde sayfayı kaydırmayı tamamen durdurur
+    touchAction: 'none'
   };
 
   const dakFormat = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
@@ -353,14 +328,12 @@ function App() {
       onTouchEnd={bitirSurukleme}
       style={{
         minHeight: '100vh',
-        minWidth: '100vw',
-        background: 'radial-gradient(circle at top left, #1e1b4b 0%, #09090b 80%)',
-        backgroundAttachment: 'fixed',
+        width: '100%',
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-        position: 'relative',
-        overflow: 'auto'
+        position: 'relative'
       }}
     >
+      {/* PING VE SIFIRLA BUTONU */}
       <div style={{ position: 'fixed', bottom: '15px', right: '20px', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 100 }}>
         <button onClick={pozisyonlariSifirla} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', padding: '6px 12px', borderRadius: '20px', fontSize: '0.7rem', cursor: 'pointer', backdropFilter: 'blur(10px)' }}>Yerleşimi Sıfırla</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', color: '#94a3b8', backdropFilter: 'blur(10px)', userSelect: 'none' }}>
@@ -369,6 +342,7 @@ function App() {
         </div>
       </div>
 
+      {/* ARAÇLAR BUTONU */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 1000 }}>
         <button
           onClick={() => {
@@ -393,6 +367,7 @@ function App() {
         </button>
       </div>
 
+      {/* MEDYA MENÜSÜ */}
       {medyaAcik && (
         <div style={{ position: 'fixed', top: '75px', right: '20px', width: '340px', maxWidth: 'calc(100vw - 40px)', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '16px', padding: '15px', color: 'white', zIndex: 999, backdropFilter: 'blur(20px)', boxShadow: '0 20px 40px rgba(0,0,0,0.6)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
@@ -402,6 +377,7 @@ function App() {
         </div>
       )}
 
+      {/* ARAÇLAR MENÜSÜ */}
       {araclarAcik && (
         <div style={{ position: 'fixed', top: '75px', right: '20px', width: '340px', maxWidth: 'calc(100vw - 40px)', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '16px', padding: '16px', color: 'white', zIndex: 999, backdropFilter: 'blur(20px)', boxShadow: '0 20px 40px rgba(0,0,0,0.6)', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
           <div style={{ fontSize: '0.75rem', letterSpacing: '1px', color: '#38bdf8', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', marginBottom: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -469,6 +445,7 @@ function App() {
         </div>
       )}
 
+      {/* SAAT WIDGET'I */}
       <div style={{ ...kutuStili(pozisyonlar.saat.x, pozisyonlar.saat.y), width: '320px', zIndex: suruklenen?.id === 'saat' ? 100 : 10 }}>
         <div style={bantStili} onMouseDown={(e) => baslatSurukleme(e.clientX, e.clientY, 'saat', 'widget')} onTouchStart={(e) => { if (e.touches.length > 0) baslatSurukleme(e.touches[0].clientX, e.touches[0].clientY, 'saat', 'widget'); }}>
           KONTROL PANELİ
@@ -486,6 +463,7 @@ function App() {
         </div>
       </div>
 
+      {/* GÜNLÜK ÖZET WIDGET'I */}
       <div style={{ ...kutuStili(pozisyonlar.gundem.x, pozisyonlar.gundem.y), width: '320px', zIndex: suruklenen?.id === 'gundem' ? 100 : 10 }}>
         <div style={bantStili} onMouseDown={(e) => baslatSurukleme(e.clientX, e.clientY, 'gundem', 'widget')} onTouchStart={(e) => { if (e.touches.length > 0) baslatSurukleme(e.touches[0].clientX, e.touches[0].clientY, 'gundem', 'widget'); }}>
           GÜNLÜK ÖZET
@@ -518,6 +496,7 @@ function App() {
         </div>
       </div>
 
+      {/* NOTLAR */}
       {notlar.map((not) => (
         <div key={not.id} style={{ ...kutuStili(not.x, not.y, not.renk), width: not.w + 'px', height: not.h + 'px', resize: 'both', zIndex: suruklenen?.id === not.id ? 100 : 5 }}>
           <div style={{ ...bantStili, justifyContent: 'space-between', padding: '8px 12px' }} onMouseDown={(e) => baslatSurukleme(e.clientX, e.clientY, not.id, 'not')} onTouchStart={(e) => { if (e.touches.length > 0) baslatSurukleme(e.touches[0].clientX, e.touches[0].clientY, not.id, 'not'); }}>
