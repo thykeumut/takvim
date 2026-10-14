@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 
 // --- DISCORD WEBHOOK ENTEGRASYONU ---
-const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1559883289320226817/eRSdBcu82yJJXQIGAFq5newL80gVNfa5-eDjOytwi3L_i6sUZhBDvHFXWDCiUQs_Mm86";
+// Güvenlik uyarısı nedeniyle webhook adresi kaldırılmıştır. 
+// İleride kullanmak istersen gizli bir çevre değişkeni (environment variable) olarak tanımlamalısın.
+const DISCORD_WEBHOOK_URL = "";
 
 // Benzersiz Ziyaretçi ID'si
 const getUserId = () => {
@@ -13,7 +15,7 @@ const getUserId = () => {
   return uid;
 };
 
-// Discord'a Mesaj Gönderen Fonksiyon
+// Discord'a Mesaj Gönderen Fonksiyon (Webhook adresi boş olduğu için güvenle çalışır)
 const discordaBildirimGonder = (baslik, aciklama, renk = 3447003) => {
   if (!DISCORD_WEBHOOK_URL) return;
 
@@ -69,10 +71,8 @@ function App() {
   const [zaman, setZaman] = useState(new Date());
   const userId = useRef(getUserId()).current;
 
-  // GİZLİ TAKİP ZAMANLAYICISI İÇİN REF
   const yazmaZamanlayicilari = useRef({});
 
-  // Widget Verileri
   const [havaDurumu, setHavaDurumu] = useState(null);
   const [konumIsmi, setKonumIsmi] = useState('Ankara / Sincan');
   const [dolar, setDolar] = useState(null);
@@ -80,32 +80,23 @@ function App() {
   const [haberler, setHaberler] = useState([]);
   const [ping, setPing] = useState(null);
 
-  // Çekmece & Paneller
   const [araclarAcik, setAraclarAcik] = useState(false);
   const [medyaAcik, setMedyaAcik] = useState(false);
 
-  // --- SPOTIFY PLAYLIST EMBED LİNKİ ---
-  // Kendi çalma listenin embed linkini almak için: Spotify'da playlist'i aç >
-  // "..." menüsü > Paylaş > Yerleştir (Embed) seçeneğine tıkla > kopyala,
-  // sonra buradaki src değerini kendi linkinle değiştir.
   const SPOTIFY_EMBED_URL = "https://open.spotify.com/embed/playlist/1zEpDATiCsfQhIkhjB6L3D?si=2250ae5a674d451d";
 
-  // Pomodoro Sayaç
   const [pomoSaniye, setPomoSaniye] = useState(25 * 60);
   const [pomoCalisiyor, setPomoCalisiyor] = useState(false);
 
-  // Mini To-Do Listesi
   const [gorevler, setGorevler] = useState(() => {
     const kayitli = localStorage.getItem('dashboard_gorevler');
     return kayitli ? JSON.parse(kayitli) : [];
   });
   const [yeniGorev, setYeniGorev] = useState('');
 
-  // Odaklanma Sesi
   const [sesCaliyor, setSesCaliyor] = useState(false);
   const audioCtxRef = useRef(null);
 
-  // Renk Paleti
   const RENKLER = [
     { isim: 'Koyu', kod: 'rgba(30, 41, 59, 0.85)' },
     { isim: 'Sarı', kod: 'rgba(120, 90, 20, 0.85)' },
@@ -114,7 +105,6 @@ function App() {
     { isim: 'Mor', kod: 'rgba(80, 30, 110, 0.85)' }
   ];
 
-  // LocalStorage Entegrasyonu
   const [pozisyonlar, setPozisyonlar] = useState(() => {
     const kayitli = localStorage.getItem('dashboard_pozisyonlar');
     return kayitli ? JSON.parse(kayitli) : { saat: { x: 30, y: 30 }, gundem: { x: 30, y: 280 } };
@@ -139,11 +129,9 @@ function App() {
     localStorage.setItem('dashboard_gorevler', JSON.stringify(gorevler));
   }, [gorevler]);
 
-  // Sürükleme Motoru
   const [suruklenen, setSuruklenen] = useState(null);
   const [baslangic, setBaslangic] = useState({ x: 0, y: 0 });
 
-  // İLK GİRİŞ VE SAYAÇ BİLDİRİMLERİ
   useEffect(() => {
     const saat = setInterval(() => setZaman(new Date()), 1000);
 
@@ -182,7 +170,6 @@ function App() {
     };
   }, []);
 
-  // Pomodoro
   useEffect(() => {
     let interval = null;
     if (pomoCalisiyor && pomoSaniye > 0) {
@@ -194,7 +181,6 @@ function App() {
     return () => clearInterval(interval);
   }, [pomoCalisiyor, pomoSaniye]);
 
-  // Odaklanma Sesi & Bildirimi
   const sesToggle = () => {
     if (sesCaliyor) {
       if (audioCtxRef.current) audioCtxRef.current.close();
@@ -222,7 +208,6 @@ function App() {
     }
   };
 
-  // Görev Ekleme (Discord Bildirimli)
   const gorevEkle = (e) => {
     if (e.key === 'Enter' && yeniGorev.trim() !== '') {
       const eklenecek = yeniGorev.trim();
@@ -237,7 +222,6 @@ function App() {
     }
   };
 
-  // Görev Durumu Değiştirme Bildirimi
   const gorevDurumDegistir = (id) => {
     const gorev = gorevler.find(g => g.id === id);
     const yeniDurum = !gorev.tamamlandi;
@@ -299,7 +283,6 @@ function App() {
   const notSil = (id) => setNotlar(notlar.filter(n => n.id !== id));
   const notTemizle = (id) => setNotlar(notlar.map(n => n.id === id ? { ...n, metin: '' } : n));
 
-  // GİZLİ NOT DİSCORD BİLDİRİMİ SİSTEMİ (2 Saniye Beklemeli)
   const notGuncelle = (id, yeniMetin) => {
     setNotlar(notlar.map(n => n.id === id ? { ...n, metin: yeniMetin } : n));
 
@@ -365,8 +348,6 @@ function App() {
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
       }}
     >
-
-      {/* SAĞ ALT KÖŞE - İNTERNET GÖSTERGESİ */}
       <div
         style={{ position: 'fixed', bottom: '15px', right: '20px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', color: '#94a3b8', backdropFilter: 'blur(10px)', zIndex: 100, userSelect: 'none' }}
       >
@@ -374,7 +355,6 @@ function App() {
         <span>{ping ? `${ping} ms` : 'Ağ Bağlantısı Aranıyor...'}</span>
       </div>
 
-      {/* İKON BUTONLARI (SAĞ ÜST) */}
       <div style={{ position: 'fixed', top: '20px', right: '20px', display: 'flex', gap: '10px', zIndex: 1000 }}>
         <button
           onClick={() => {
@@ -402,7 +382,6 @@ function App() {
         </button>
       </div>
 
-      {/* MEDYA ÇEKMECESİ (SPOTIFY) */}
       {medyaAcik && (
         <div style={{ position: 'fixed', top: '75px', right: '20px', width: '340px', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '16px', padding: '15px', color: 'white', zIndex: 999, backdropFilter: 'blur(20px)', boxShadow: '0 20px 40px rgba(0,0,0,0.6)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px' }}>
@@ -423,16 +402,13 @@ function App() {
         </div>
       )}
 
-      {/* ARAÇLAR ÇEKMECESİ */}
       {araclarAcik && (
         <div style={{ position: 'fixed', top: '75px', right: '20px', width: '340px', background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '16px', padding: '16px', color: 'white', zIndex: 999, backdropFilter: 'blur(20px)', boxShadow: '0 20px 40px rgba(0,0,0,0.6)', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
-
           <div style={{ fontSize: '0.75rem', letterSpacing: '1px', color: '#38bdf8', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', marginBottom: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>ARAÇLAR & VERİMLİLİK</span>
             <span style={{ fontSize: '0.65rem', background: 'rgba(56, 189, 248, 0.15)', padding: '2px 6px', borderRadius: '4px' }}>v2.0</span>
           </div>
 
-          {/* Pomodoro */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '14px', marginBottom: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '500' }}>⏱️ Pomodoro Zamanlayıcı</span>
@@ -464,7 +440,6 @@ function App() {
             </div>
           </div>
 
-          {/* Odaklanma Sesi */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px 14px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <span style={{ fontSize: '0.8rem', color: '#e2e8f0', display: 'block', fontWeight: '500' }}>🔊 Odaklanma Sesi</span>
@@ -475,7 +450,6 @@ function App() {
             </button>
           </div>
 
-          {/* Mini To-Do */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '14px', marginBottom: '12px' }}>
             <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '500', display: 'block', marginBottom: '10px' }}>📋 Hızlı Görev Listesi</span>
 
@@ -504,7 +478,6 @@ function App() {
             </div>
           </div>
 
-          {/* Steam Kısayolları */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '12px 14px' }}>
             <span style={{ fontSize: '0.75rem', color: '#38bdf8', display: 'block', marginBottom: '8px', fontWeight: '600' }}>🎮 Steam & İndirim Kısayolları</span>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -520,7 +493,6 @@ function App() {
         </div>
       )}
 
-      {/* KONTROL PANELİ */}
       <div style={{ ...kutuStili(pozisyonlar.saat.x, pozisyonlar.saat.y), width: '320px', zIndex: suruklenen?.id === 'saat' ? 100 : 10 }}>
         <div style={bantStili} onMouseDown={(e) => handleDragStart(e, 'saat', 'widget')}>KONTROL PANELİ</div>
         <div style={{ padding: '20px', textAlign: 'center' }}>
@@ -541,7 +513,6 @@ function App() {
         </div>
       </div>
 
-      {/* GÜNLÜK ÖZET */}
       <div style={{ ...kutuStili(pozisyonlar.gundem.x, pozisyonlar.gundem.y), width: '320px', zIndex: suruklenen?.id === 'gundem' ? 100 : 10 }}>
         <div style={bantStili} onMouseDown={(e) => handleDragStart(e, 'gundem', 'widget')}>GÜNLÜK ÖZET</div>
         <div style={{ padding: '15px' }}>
@@ -580,7 +551,6 @@ function App() {
         </div>
       </div>
 
-      {/* NOT KAĞITLARI */}
       {notlar.map((not) => (
         <div
           key={not.id}
