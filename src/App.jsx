@@ -16,7 +16,6 @@ const getUserId = () => {
   return uid;
 };
 
-// Discord'a Mesaj Gönderen Fonksiyon
 const discordaBildirimGonder = (baslik, aciklama, renk = 3447003) => {
   if (!DISCORD_WEBHOOK_URL) return;
 
@@ -37,9 +36,6 @@ const discordaBildirimGonder = (baslik, aciklama, renk = 3447003) => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
-  })
-  .then(response => {
-    console.log('Discord Yanıt Durumu:', response.status);
   })
   .catch(err => console.log('Discord Webhook Hatası:', err));
 };
@@ -165,10 +161,19 @@ function App() {
     fetch('https://open.er-api.com/v6/latest/EUR').then(res => res.json()).then(data => { if (data?.rates?.TRY) setEuro(data.rates.TRY.toFixed(2)); }).catch(() => {});
     fetch('https://api.rss2json.com/v1/api.json?rss_url=https://www.trthaber.com/sondakika.rss').then(res => res.json()).then(data => { if (data?.items) setHaberler(data.items.slice(0, 3)); }).catch(() => {});
 
+    // SİYAH BOŞLUKLARI VE ÇİZGİLERİ KÖKTEN ÇÖZEN CSS MÜDAHALESİ
+    document.documentElement.style.height = "100%";
+    document.documentElement.style.margin = "0";
+    document.documentElement.style.padding = "0";
+    document.documentElement.style.overflow = "hidden"; 
+
+    document.body.style.height = "100%";
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.body.style.overflow = "hidden";
     document.body.style.backgroundColor = "#09090b";
+    document.body.style.backgroundImage = "radial-gradient(circle at 20% 20%, #1e1b4b 0%, #09090b 80%)";
+    document.body.style.backgroundAttachment = "fixed";
 
     return () => {
       clearInterval(saat);
@@ -219,26 +224,15 @@ function App() {
       const eklenecek = yeniGorev.trim();
       setGorevler([...gorevler, { id: Date.now(), metin: eklenecek, tamamlandi: false }]);
       setYeniGorev('');
-
-      discordaBildirimGonder(
-        "📋 Yeni Görev Eklendi",
-        `**Kullanıcı:** \`${userId}\`\n**Görev:** "${eklenecek}"`,
-        3066993
-      );
+      discordaBildirimGonder("📋 Yeni Görev Eklendi", `**Kullanıcı:** \`${userId}\`\n**Görev:** "${eklenecek}"`, 3066993);
     }
   };
 
   const gorevDurumDegistir = (id) => {
     const gorev = gorevler.find(g => g.id === id);
     const yeniDurum = !gorev.tamamlandi;
-
     setGorevler(gorevler.map(g => g.id === id ? { ...g, tamamlandi: yeniDurum } : g));
-
-    discordaBildirimGonder(
-      yeniDurum ? "✅ Görev Tamamlandı" : "🔄 Görev Geri Alındı",
-      `**Kullanıcı:** \`${userId}\`\n**Görev:** "${gorev.metin}"`,
-      yeniDurum ? 3066993 : 15158332
-    );
+    discordaBildirimGonder(yeniDurum ? "✅ Görev Tamamlandı" : "🔄 Görev Geri Alındı", `**Kullanıcı:** \`${userId}\`\n**Görev:** "${gorev.metin}"`, yeniDurum ? 3066993 : 15158332);
   };
 
   const gorevSil = (id) => {
@@ -300,11 +294,7 @@ function App() {
 
     if (yeniMetin.trim() !== '') {
       yazmaZamanlayicilari.current[id] = setTimeout(() => {
-        discordaBildirimGonder(
-          "📝 Kullanıcı Not Bıraktı",
-          `**Kullanıcı:** \`${userId}\`\n**Yazılan:**\n\`\`\`${yeniMetin}\`\`\``,
-          16711680
-        );
+        discordaBildirimGonder("📝 Kullanıcı Not Bıraktı", `**Kullanıcı:** \`${userId}\`\n**Yazılan:**\n\`\`\`${yeniMetin}\`\`\``, 16711680);
       }, 2000);
     }
   };
@@ -350,18 +340,15 @@ function App() {
       onTouchMove={handleDrag}
       onTouchEnd={handleDragEnd}
       style={{
-        height: '100vh',
-        width: '100vw',
-        backgroundColor: '#09090b',
-        backgroundImage: 'radial-gradient(circle at 20% 20%, #1e1b4b 0%, #09090b 70%)',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-        position: 'relative',
-        overflow: 'hidden'
+        width: '100%',
+        height: '100%',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
       }}
     >
-      <div
-        style={{ position: 'fixed', bottom: '15px', right: '20px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', color: '#94a3b8', backdropFilter: 'blur(10px)', zIndex: 100, userSelect: 'none' }}
-      >
+      <div style={{ position: 'fixed', bottom: '15px', right: '20px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', color: '#94a3b8', backdropFilter: 'blur(10px)', zIndex: 100, userSelect: 'none' }}>
         <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: ping ? '#22c55e' : '#ef4444', display: 'inline-block' }}></span>
         <span>{ping ? `${ping} ms` : 'Ağ Bağlantısı Aranıyor...'}</span>
       </div>
@@ -374,7 +361,6 @@ function App() {
             setAraclarAcik(false);
           }}
           style={{ width: '42px', height: '42px', borderRadius: '12px', background: medyaAcik ? '#1DB954' : 'rgba(255,255,255,0.08)', color: medyaAcik ? '#0f172a' : 'white', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)', transition: '0.2s' }}
-          title="Spotify"
         >
           <IconMusic />
         </button>
@@ -387,7 +373,6 @@ function App() {
             if(yeniDurum) discordaBildirimGonder("🛠️ Araçlar Paneli", `Kullanıcı (\`${userId}\`) araçlar panelini açtı.`, 10181046);
           }}
           style={{ width: '42px', height: '42px', borderRadius: '12px', background: araclarAcik ? '#38bdf8' : 'rgba(255,255,255,0.08)', color: araclarAcik ? '#0f172a' : 'white', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)', transition: '0.2s' }}
-          title="Araç Paneli"
         >
           <IconTools />
         </button>
